@@ -8,7 +8,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
-import se.Abdikarim.util.Time;
+import util.Time;
 
 public class Window
 {

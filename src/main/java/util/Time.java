@@ -1,4 +1,4 @@
-package se.Abdikarim.util;
+package util;
 
 public class Time
 {
