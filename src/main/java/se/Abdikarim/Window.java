@@ -5,13 +5,24 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
+import imgui.ImGui;
+import imgui.flag.ImGuiConfigFlags;
+import imgui.gl3.ImGuiImplGl3;
+import imgui.glfw.ImGuiImplGlfw;
 import org.lwjgl.Version;
+import org.lwjgl.glfw.Callbacks;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
-import util.Time;
 
 public class Window
 {
+    private final ImGuiImplGlfw imGuiGlfw = new ImGuiImplGlfw();
+    private final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
+    private final String glslVersion = null;
+
+    private final ImGuiLayer imGuiLayer = new ImGuiLayer();
+
     public float r, g, b, a;
     private final int width;
     private final int height;
@@ -25,9 +36,10 @@ public class Window
     {
         width = 1920;
         height = 1000;
-        title = "Mario";
+        title = "Kzp-Engine";
 
-        r = g = b = a = 1;
+        r = g = b = 0;
+        a = 1;
     }
 
     public static void changeScene(int newScene)
@@ -37,10 +49,12 @@ public class Window
             case 0:
                 currentScene = new LevelEditorScene();
                 currentScene.init();
+                currentScene.start();
                 break;
             case 1:
                 currentScene = new LevelScene();
                 currentScene.init();
+                currentScene.start();
                 break;
             default:
                 assert false: "Unknown scene: " + newScene;
@@ -54,6 +68,11 @@ public class Window
             Window.window = new Window();
         }
         return Window.window;
+    }
+
+    public static Scene getScene( )
+    {
+        return get().currentScene;
     }
 
     public void run()
@@ -119,13 +138,28 @@ public class Window
         // bindings available for use.
         GL.createCapabilities( );
 
+        ImGui.createContext();
+        ImGui.getIO().addConfigFlags( ImGuiConfigFlags.ViewportsEnable);
+        ImGui.getIO().setFontGlobalScale( 2f );
+        imGuiGlfw.init( glfwWindow, true );
+        imGuiGl3.init(glslVersion);
 
         changeScene( 0 );
     }
 
+    public void destroyImGui()
+    {
+        imGuiGl3.dispose();
+        imGuiGlfw.dispose();
+        ImGui.destroyContext();
+        Callbacks.glfwFreeCallbacks( glfwWindow );
+        glfwDestroyWindow( glfwWindow );
+        glfwTerminate();
+    }
+
     public void loop()
     {
-        float beginTime = Time.getTime();
+        float beginTime = ( float ) glfwGetTime();
         float endTime;
         float dt = -1.0f;
 
@@ -137,6 +171,22 @@ public class Window
             glClearColor(r, g, b, a);
             glClear( GL_COLOR_BUFFER_BIT );
 
+            imGuiGlfw.newFrame();
+            ImGui.newFrame();
+
+            imGuiLayer.imgui();
+
+            ImGui.render();
+            imGuiGl3.renderDrawData( ImGui.getDrawData() );
+
+
+            if (ImGui.getIO().hasConfigFlags( ImGuiConfigFlags.ViewportsEnable)) {
+                final long backupWindowPtr = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
+                ImGui.updatePlatformWindows();
+                ImGui.renderPlatformWindowsDefault();
+                org.lwjgl.glfw.GLFW.glfwMakeContextCurrent(backupWindowPtr);
+            }
+
             if(dt >= 0)
             {
                 currentScene.update( dt );
@@ -144,9 +194,11 @@ public class Window
 
             glfwSwapBuffers( glfwWindow );
 
-            endTime = Time.getTime();
+            endTime = ( float ) glfwGetTime();
             dt = endTime - beginTime;
             beginTime = endTime;
         }
+
+        destroyImGui();
     }
 }

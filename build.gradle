@@ -22,6 +22,14 @@ project.ext.lwjglVersion = "3.3.3"
 project.ext.jomlVersion = "1.10.5"
 project.ext.lwjglNatives = "natives-windows"
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "io.github.spair:imgui-java-app:1.81.0"
+}
+
 dependencies {
     implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
 
